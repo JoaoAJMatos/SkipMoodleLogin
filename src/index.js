@@ -11,40 +11,52 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             if (url === 'https://ead.ipleiria.pt/2022-23/login/index.php') {
                   console.log('User is on the login page');
 
-                  // Get the username and password input fields
-                  chrome.scripting.executeScript({target: {tabId: tab.id}, function: () => {
-                        const username = document.getElementById("username");
-                        const password = document.getElementById("password");
-                        const loginButton = document.getElementById("loginbtn");
+                  // If we are able to get the password and username from the chrome storage, then we can proceed to login
+                  if (chrome.storage.sync) {
+                        chrome.storage.sync.get(['username', 'password'], (result) => {
+                              if (result.username && result.password) {
+                                    console.log('User credentials found in the chrome storage');
+                                    console.log(result.username);
+                                    console.log(result.password);
 
-                        // Click the confirm button
-                        const confirmar = document.getElementsByClassName("btn btn-primary")[0]
-                        if (confirmar) {
-                              confirmar.click();
-                        }
+                                    chrome.scripting.executeScript({target: {tabId: tab.id}, function: () => {
+                                          const username = document.getElementById("username");
+                                          const password = document.getElementById("password");
+                                          const loginButton = document.getElementById("loginbtn");
+            
+                                          // Click the confirm button
+                                          const confirmar = document.getElementsByClassName("btn btn-primary")[0]
+                                          if (confirmar) {
+                                                confirmar.click();
+                                          }
+            
+                                          // Set the username and password values according to the values stored in the chrome storage
+                                          chrome.storage.sync.get(['username', 'password'], (result) => {
+                                                username.value = result.username;
+                                                password.value = result.password;
 
-                        username.value = "";
-                        password.value = "";
+                                                // Click the login button
+                                                loginButton.click();
+                                          });
+                                    }});
+                              } else {
+                                    console.log('User credentials not found in the chrome storage');
 
-                        // Click the login button
-                        loginButton.click();
+                                    // If we are not able to get the password and username from the chrome storage, then we need to ask the user to input them
+                                    chrome.scripting.executeScript({target: {tabId: tab.id}, function: () => {
+                                          const username = document.getElementById("username");
+                                          const password = document.getElementById("password");
+                                          const loginButton = document.getElementById("loginbtn");
 
-                        // Get the current tab url
-                        const url = window.location.href;
-                        if (url === 'https://ead.ipleiria.pt/2022-23/my/') {
-                              console.log('User is logged in');
-
-                              // Get the current tab id
-                              const tabId = chrome.devtools.inspectedWindow.tabId;
-
-                              // Send a message to the background script
-                              chrome.runtime.sendMessage({tabId: tabId, message: "logged-in"}, (result) => {
-                                    console.log(result);
-                              });
-                        }
-                  }}, (result) => {
-                        console.log(result);
-                  });
+                                          loginButton.addEventListener('click', () => {
+                                                chrome.storage.sync.set({username: username.value, password: password.value}, () => {
+                                                      console.log('User credentials saved to the chrome storage');
+                                                });
+                                          });
+                                    }});
+                              }
+                        });
+                  }
             }
       });
 });
