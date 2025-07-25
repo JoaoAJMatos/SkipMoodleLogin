@@ -55,7 +55,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             // Get the current tab url
             const url = tab.url;
       
-            if (url === 'https://ead.ipleiria.pt/2022-23/login/index.php') {
+            if (url === 'https://ead.ipleiria.pt/2024-25/login/index.php') {
                   console.log('User is on the login page');
 
                   chrome.storage.sync.get(['username', 'password'], (result) => {
